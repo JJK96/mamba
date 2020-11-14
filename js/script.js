@@ -135,13 +135,16 @@ const mamba_game = (function () {
 
 	
 	const silverAudio = new Audio('./silver.wav');
+	const goldAudio = new Audio('./gold.wav');
 	const bronzeAudio = new Audio('./bronze.wav');
 	const gameOverAudio = new Audio('./game-over.wav');
 
 	silverAudio.preload = 'auto';
+	goldAudio.preload = 'auto';
 	bronzeAudio.preload = 'auto';
 	gameOverAudio.preload = 'auto';
 
+	goldAudio.load();
 	silverAudio.load();
 	bronzeAudio.load();
 	gameOverAudio.load();
@@ -154,6 +157,9 @@ const mamba_game = (function () {
 			} else if (type == 'silver') {
 				silverAudioInstance = silverAudio.cloneNode();
 				silverAudioInstance.play();
+			} else if (type == 'gold') {
+				goldAudioInstance = goldAudio.cloneNode();
+				goldAudioInstance.play();
 			} else if (type == 'gameOver') {
 				gameOverAudioInstance = gameOverAudio.cloneNode();
 				gameOverAudioInstance.play();
@@ -404,7 +410,7 @@ const mamba_game = (function () {
 						gold.removeGold();
 						const goldWorth = random(1, 5) * 10;
 						score.increaseScore(goldWorth);
-						playSound('silver');
+						playSound('gold');
 					}					
 				}
 			}						
@@ -1082,16 +1088,16 @@ const mamba_game = (function () {
 
 			// Draw a wall block in case the collision was with a wall. Otherwise, mambaBody is drawn anyway.
 
-			/*if (times === 3) {
-				ctx.fillStyle = '#aa5858';
-				ctx.fillRect(collisionPosition[0] * blockSize, collisionPosition[1] * blockSize, blockSize, blockSize);				
-			}*/
-
+			if (times === 3) {
+				ctx.drawImage(wallSVG, collisionPosition[0] * blockSize, collisionPosition[1] * blockSize, blockSize, blockSize);
+			}
+			if (times === 1) {
+				playSound('gameOver');
+			}
 			if (times > 0) {
 				drawBackground(ctx, '#0000aa');
 				drawBody(ctx, 'white');
 				drawHead(ctx, 'white', mambaDirection, head[0], head[1]);
-				playSound('gameOver');
 				setTimeout(function () {
 					drawBackground(ctx, 'green');
 					drawBody(ctx, 'yellow');
