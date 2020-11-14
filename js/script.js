@@ -21,8 +21,24 @@ const mamba_game = (function () {
 	bronzeSVG.src = "images/bronze.svg";
 	const silverSVG = new Image(blockSize, blockSize);
 	silverSVG.src = "images/silver.svg";	
-	const headSVG = new Image(blockSize, blockSize);
-	headSVG.src = "images/head.svg";
+
+	const headUpSVG = new Image(blockSize, blockSize);
+	headUpSVG.src = "images/head-up.svg";
+	const headDownSVG = new Image(blockSize, blockSize);
+	headDownSVG.src = "images/head-down.svg";
+	const headLeftSVG = new Image(blockSize, blockSize);
+	headLeftSVG.src = "images/head-left.svg";
+	const headRightSVG = new Image(blockSize, blockSize);
+	headRightSVG.src = "images/head-right.svg";
+	const whiteHeadUpSVG = new Image(blockSize, blockSize);
+	whiteHeadUpSVG.src = "images/head-up-white.svg";
+	const whiteHeadDownSVG = new Image(blockSize, blockSize);
+	whiteHeadDownSVG.src = "images/head-down-white.svg";
+	const whiteHeadLeftSVG = new Image(blockSize, blockSize);
+	whiteHeadLeftSVG.src = "images/head-left-white.svg";
+	const whiteHeadRightSVG = new Image(blockSize, blockSize);
+	whiteHeadRightSVG.src = "images/head-right-white.svg";
+
 	const whiteBodySVG = new Image(blockSize, blockSize);
 	whiteBodySVG.src = "images/body-white.svg";
 	const whiteHeadSVG = new Image(blockSize, blockSize);
@@ -42,7 +58,11 @@ const mamba_game = (function () {
 	const whiteTailLeftSVG = new Image(blockSize, blockSize);
 	whiteTailLeftSVG.src = "images/tail-left-white.svg";	
 	const whiteTailRightSVG = new Image(blockSize, blockSize);
-	whiteTailRightSVG.src = "images/tail-right-white.svg";	
+	whiteTailRightSVG.src = "images/tail-right-white.svg";
+	const wallSVG = new Image(blockSize, blockSize);
+	wallSVG.src = "images/wall.svg";
+	const goldSVG = new Image(blockSize, blockSize);
+	goldSVG.src = "images/gold.svg";
 
 	// Menu elements					
 	
@@ -257,11 +277,11 @@ const mamba_game = (function () {
 		currentFrame++;
 		mamba.advance(bronze);
 		wall.updateWallPositions();
-		draw(ctx, mamba.positions, bronze.positions, silver.positions, gold.getPosition(), wall.getPositions());	
+		draw(ctx, mamba.positions, mamba.direction(), bronze.positions, silver.positions, gold.getPosition(), wall.getPositions());
 		score.displayScore();		
 		if (mamba.checkCollision()) {
 			let positions = mamba.retreat();
-			gameOver(positions, mamba.positions[0]);
+			gameOver(positions, mamba.positions[0], mamba.direction());
 			return
 		}								
 		if (isPaused == true) {
@@ -452,6 +472,7 @@ const mamba_game = (function () {
 			getTail: getTail,
 			retreat: retreat,
 			positions: positions,
+			direction: () => direction,
 			setWallThreshold: setWallThreshold
 		}
 	})();
@@ -723,7 +744,46 @@ const mamba_game = (function () {
 		}
 	})();
 
-	function draw (ctx, mambaPositions, bronzePositions, silverPositions, goldPosition, wallPositions) {
+	function drawHead (ctx, color, mambaDirection, x, y) {
+		if (color == 'white') {
+			let whiteHeadSVG
+			switch(mambaDirection) {
+				case 'up':
+				    whiteHeadSVG = whiteHeadUpSVG
+				break;
+				case 'down':
+				    whiteHeadSVG = whiteHeadDownSVG
+				break;
+				case 'left':
+				    whiteHeadSVG = whiteHeadLeftSVG
+				break;
+				case 'right':
+				    whiteHeadSVG = whiteHeadRightSVG
+			    break;
+			}
+			ctx.drawImage(whiteHeadSVG, x * blockSize, x * blockSize, blockSize, blockSize);
+		} else {
+			let headSVG
+			switch(mambaDirection) {
+				case 'up':
+				    headSVG = headUpSVG
+				break;
+				case 'down':
+				    headSVG = headDownSVG
+				break;
+				case 'left':
+				    headSVG = headLeftSVG
+				break;
+				case 'right':
+				    headSVG = headRightSVG
+			    break;
+			}
+			ctx.drawImage(headSVG, x * blockSize, y * blockSize, blockSize, blockSize);
+		}
+	}
+
+
+	function draw (ctx, mambaPositions, mambaDirection, bronzePositions, silverPositions, goldPosition, wallPositions) {
 		
 		const allCurrentPositions = [];
 		const positionsToClear = [];
@@ -819,7 +879,7 @@ const mamba_game = (function () {
 					{
 						
 						if (isHead) {
-							ctx.drawImage(headSVG, position[0] * blockSize, position[1] * blockSize, blockSize, blockSize);
+    						drawHead(ctx, 'yellow', mambaDirection, position[0], position[1]);
 							isHead = false;
 						} else {
 							ctx.drawImage(bodySVG, position[0] * blockSize, position[1] * blockSize, blockSize, blockSize);
@@ -838,14 +898,12 @@ const mamba_game = (function () {
 					break;
 				case 'gold':
 					{
-						ctx.fillStyle = '#55ff55';
-						ctx.fillRect(position[0] * blockSize, position[1] * blockSize, blockSize, blockSize);
+						ctx.drawImage(goldSVG, position[0] * blockSize, position[1] * blockSize, blockSize, blockSize);
 					}
 					break;
 				case 'wall':
 					{
-						ctx.fillStyle = '#aa5858';
-						ctx.fillRect(position[0] * blockSize, position[1] * blockSize, blockSize, blockSize);
+						ctx.drawImage(wallSVG, position[0] * blockSize, position[1] * blockSize, blockSize, blockSize);
 					}
 					break;
 				default:
@@ -860,7 +918,7 @@ const mamba_game = (function () {
 		allPreviousPositions = allCurrentPositions.slice();
 	}
 
-	function gameOver (positions, collisionPosition) {
+	function gameOver (positions, collisionPosition, mambaDirection) {
 		let body = positions.slice(1, positions.length);
 		let head = positions[0];
 		let times = 3;
@@ -1024,20 +1082,20 @@ const mamba_game = (function () {
 
 			// Draw a wall block in case the collision was with a wall. Otherwise, mambaBody is drawn anyway.
 
-			if (times === 3) {
+			/*if (times === 3) {
 				ctx.fillStyle = '#aa5858';
 				ctx.fillRect(collisionPosition[0] * blockSize, collisionPosition[1] * blockSize, blockSize, blockSize);				
-			}
+			}*/
 
 			if (times > 0) {
 				drawBackground(ctx, '#0000aa');
 				drawBody(ctx, 'white');
-				drawHead(ctx, 'white');
+				drawHead(ctx, 'white', mambaDirection, head[0], head[1]);
 				playSound('gameOver');
 				setTimeout(function () {
-					drawBackground(ctx, 'black');
+					drawBackground(ctx, 'green');
 					drawBody(ctx, 'yellow');
-					drawHead(ctx, 'yellow');
+					drawHead(ctx, 'yellow', mambaDirection, head[0], head[1]);
 					times--;
 					setTimeout(function () {
 						drawGameOver(collisionPosition);
@@ -1076,15 +1134,6 @@ const mamba_game = (function () {
 				}
 			});			
 		}
-
-		function drawHead (ctx, color) {
-			
-			if (color == 'white') {
-				ctx.drawImage(whiteHeadSVG, head[0] * blockSize, head[1] * blockSize, blockSize, blockSize);			
-			} else {
-				ctx.drawImage(headSVG, head[0] * blockSize, head[1] * blockSize, blockSize, blockSize);	
-			}
-		}		
 
 		mamba.retreat();
 		drawGameOver(collisionPosition);
